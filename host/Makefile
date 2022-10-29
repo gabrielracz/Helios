@@ -1,7 +1,7 @@
 OBJECTS = obj/control.o obj/message.o obj/serial.o
 HEADERS = inc/control.h inc/message.h
 CFLAGS  = -g
-GLLIBS = -lglfw -lGLEW -lGL
+GLLIBS = -lglfw -lGLEW -lGL -lm
 
 all: $(OBJECTS) helios
 
