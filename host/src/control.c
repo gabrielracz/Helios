@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -59,6 +60,10 @@ static void callback_resize(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
+static inline float clampf(uint8_t b) {
+	return b / 255.0f;
+}
+
 static GLFWwindow* win;
 static int win_width, win_height;
 static char win_title[128];
@@ -82,35 +87,33 @@ int ctrl_init(const char* title, int w, int h) {
 	}
 	glfwMakeContextCurrent(win);
 
-	glViewport(0, 0, win_width, win_height);		//Perspective projection matrix
-	glfwSetFramebufferSizeCallback(win, callback_resize);
 	glewInit();
 
+	/*glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);*/
 
-
-	glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(win, callback_mouse_move);
-	glfwSetScrollCallback(win, callback_scroll);
-	glfwSetKeyCallback(win, callback_key);
-	glfwSetMouseButtonCallback(win, callback_mouse_button);
+	glfwSetFramebufferSizeCallback(win, callback_resize);
+	glfwSetCursorPosCallback(win,		callback_mouse_move);
+	glfwSetScrollCallback(win,			callback_scroll);
+	glfwSetKeyCallback(win,				callback_key);
+	glfwSetMouseButtonCallback(win,		callback_mouse_button);
 
 	return 0;
 }
 
 static size_t counter = 0;
 int ctrl_update() {
-
-	glfwPollEvents();
-
 	int rc = OK;
+	glfwPollEvents();
 	if(glfwWindowShouldClose(win)) {
 		printf("close\n");
 		rc = CLOSE;
 	}	
 
-	/*usleep(5e5);*/
-	/*printf("update %zu\n", counter++);*/
+	glClearColor(clampf(0x67), clampf(0x5c), clampf(0xff), clampf(0xff));
+	glClear(GL_COLOR_BUFFER_BIT);
 
+
+	glfwSwapBuffers(win);
 	return rc;
 }
 
