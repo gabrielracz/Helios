@@ -1,5 +1,5 @@
 #include "libsha.h"
-#include "defines.h"
+#include "../defines.h"
 
 void setup() {
   // put your setup code here, to run once:

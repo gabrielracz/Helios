@@ -5,7 +5,9 @@
 #include <errno.h>
 #include <termios.h>  
 
-#include "../defines.h"
+/*#include "../defines.h"*/
+#define MSGSIZE 60
+#define RSPSIZE 65
 
 int init_serial(int sfd) {
 	int rc;
@@ -63,7 +65,7 @@ int init_serial(int sfd) {
 	return 0;
 }
 
-int main(int argc, char* argv[]) {
+int serial_main(int argc, char* argv[]) {
 
 	if(argc < 2) {
 		printf("USAGE: srl FILE\n");
