@@ -65,6 +65,11 @@ int init_serial(int sfd) {
 
 int main(int argc, char* argv[]) {
 
+	if(argc < 2) {
+		printf("USAGE: srl FILE\n");
+		return 1;
+	}
+
 	int sfd = open("/dev/ttyUSB0", O_RDWR);
 	if(sfd < 0) {
 		perror("serial fd open");
