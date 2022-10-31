@@ -38,7 +38,7 @@ static void callback_scroll(GLFWwindow* window, double xoffset, double yoffset) 
 }
 
 static void callback_mouse_move(GLFWwindow* window, double xpos, double ypos) {
-	printf("mouse move\n");
+	/*printf("mouse move\n");*/
 }
 
 static void callback_mouse_button(GLFWwindow* window, int button, int action, int mods) {
@@ -164,13 +164,19 @@ static int load_shader(const char* vert_path, const char* frag_path) {
 
 
 int init_quad() {
-	// Set up vertex data (and buffer(s)) and attribute pointers
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f, // Left  
-		 0.5f, -0.5f, 0.0f, // Right 
-		 0.5f,  0.5f, 0.0f,  // Top   
-		-0.5f,  0.5f, 0.0f
+		 0.5f,  0.5f, 0.0f,  1.0f, 1.0f,
+		 0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f,  0.0f, 1.0f
 	};
+
+	/*float vertices[] = {*/
+		 /*0.5f,  0.5f, 0.0f,  1.0f, 0.0f,*/
+		 /*0.5f, -0.5f, 0.0f,  1.0f, 1.0f,*/
+		/*-0.5f, -0.5f, 0.0f,  0.0f, 1.0f,*/
+		/*-0.5f,  0.5f, 0.0f,  0.0f, 0.0f*/
+	/*};*/
 
 	unsigned int indices[] = {
 		0, 1, 2,
@@ -190,8 +196,11 @@ int init_quad() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (GLvoid*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -214,6 +223,8 @@ int load_texture(const char* path) {
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
 	//Wrapping
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -221,7 +232,6 @@ int load_texture(const char* path) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(data);
 	return texture;
@@ -253,51 +263,34 @@ static char win_title[128];
 void render_text(const char* text, float x, float y, float size) {
     glUseProgram(shaders[TEXT_SHDR]);
     glBindVertexArray(vertex_arrays[TEXT_VAO]);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-	return;
+
 	/*glActiveTexture(GL_TEXTURE0);*/
-	/*glBindTexture(GL_TEXTURE_2D, textures[CHARMAP]);*/
+	glBindTexture(GL_TEXTURE_2D, textures[CHARMAP]);
 
 	int len = strlen(text);
 	int loc_text_len = glGetUniformLocation(shaders[TEXT_SHDR], "text_len");
 	glUniform1i(loc_text_len, len);
 
 
-	float width = len*0.75*(size);
+	float width = len*8/15.0f*(size);
 
 
 	float sx = width;
 	float sy = size;
-	float transformation_matrix_row[] = {
-		 sx , 0.0f, 0.0f,  x  ,
-		0.0f,  sy , 0.0f,  y  ,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 0.0f
-	};
 
-	float transformation_matrix_col[] = {
+	float transformation_matrix[] = {
 		 sx , 0.0f, 0.0f, 0.0f,
 		0.0f,  sy , 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		 x  ,  y  , 0.0f, 1.0f
 	};
-
-	float identity_matrix[] = {
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-
 	
 	int loc_transform = glGetUniformLocation(shaders[TEXT_SHDR], "transformation_matrix");
-	glUniformMatrix4fv(loc_transform, 1, GL_FALSE, identity_matrix);
+	glUniformMatrix4fv(loc_transform, 1, GL_FALSE, transformation_matrix);
 
 	// Set the text data
 	assert(512 > len);
-	int data[512];
+	int data[512] = {0};
 	for (int i = 0; i < len; i++){
 		data[i] = text[i];
 	}
@@ -306,6 +299,7 @@ void render_text(const char* text, float x, float y, float size) {
 	glUniform1iv(loc_content, len*sizeof(int), data);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 }
 
 int ctrl_init(const char* title, int w, int h) {
@@ -353,12 +347,9 @@ int ctrl_init(const char* title, int w, int h) {
 
 	//  VERTEX ARRAYS
 	vertex_arrays[TEXT_VAO] = init_quad();
-	/*vertex_arrays[TEXT_VAO] = init_quad();*/
-	/*test(win, shaders[TEXT_SHDR], vertex_arrays[TEXT_VAO]);*/
-	/*return 0;*/
 
 	//  TEXTURES
-	textures[CHARMAP] = load_texture("rsc/charmap.png");
+	textures[CHARMAP] = load_texture("rsc/fixedsys.png");
 
 	return 0;
 }
@@ -372,10 +363,14 @@ int ctrl_update() {
 		rc = CLOSE;
 	}	
 
+	char inp[64];
+	fgets(inp, 64, stdin);
+	inp[strlen(inp)-1] = 0; //remove newline
+
 	glClearColor(clampf(0x00), clampf(0x00), clampf(0x00), clampf(0xff));
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	render_text("hello", 0.0f, 0.0f, 1.0f);
+	render_text(inp, 0.0f, 0.0f, 0.05f);
 
 	glfwSwapBuffers(win);
 	return rc;
