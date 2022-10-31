@@ -1,21 +1,21 @@
 OBJECTS = obj/control.o obj/message.o obj/serial.o
 HEADERS = inc/control.h inc/message.h
-CFLAGS  = -g
+CFLAGS  = -g -Wall
 GLLIBS = -lglfw -lGLEW -lGL -lm
 
 all: $(OBJECTS) helios
 
 obj/control.o: src/control.c $(HEADERS)
-	gcc -c -o obj/control.o src/control.c $(GLLIBS)
+	gcc $(CFLAGS) -c -o obj/control.o src/control.c $(GLLIBS)
 
 obj/message.o: src/message.c $(HEADERS)
-	gcc -c -o obj/message.o src/message.c
+	gcc $(CFLAGS) -c -o obj/message.o src/message.c
 
 obj/serial.o: src/serial.c $(HEADERS)
-	gcc -c -o obj/serial.o src/serial.c
+	gcc $(CFLAGS) -c -o obj/serial.o src/serial.c
 
 helios: src/main.c $(OBJECTS) $(HEADERS)
-	gcc -o helios src/main.c $(OBJECTS) $(GLLIBS)
+	gcc $(CFLAGS) -o helios src/main.c $(OBJECTS) $(GLLIBS)
 
 clean:
 	rm -f obj/*

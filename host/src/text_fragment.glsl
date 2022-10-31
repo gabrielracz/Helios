@@ -2,7 +2,6 @@
 #version 130
 
 // Attributes passed from the vertex shader
-in vec4 color_interp;
 in vec2 uv_interp;
 
 // Texture sampler
@@ -23,7 +22,8 @@ uniform int text_content[40];
 
 void main()
 {
-
+	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	return;
     // Check if we are writing on this sprite
     if (text_len > 0){
         // Find which character we are writing in the block covered by
@@ -56,13 +56,14 @@ void main()
 		//if(inverted){
 			//gl_FragColor = vec4(color.b, color.g, color.r, 1.0);
 		//}else {
-			gl_FragColor = vec4(color.r, color.g, color.b, 1.0);
+			//gl_FragColor = vec4(color.r, color.g, color.b, 1.0);
+			gl_FragColor = vec4(0.9, 0.9, 0.9, 1.0f);
 		//}
 
 		 //Check for transparency
-		if(color.a < 0.77)
-		{
-			 discard;
-		}
+		//if(color.a < 0.77)
+		//{
+			 //discard;
+		//}
     } 
 }
