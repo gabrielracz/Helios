@@ -29,6 +29,9 @@
 /*"color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"*/
 /*"}\n\0";*/
 
+char input_buffer[1024] = {0};
+int input_counter = 0;
+
 static inline float clampf(uint8_t b) {
 	return b / 255.0f;
 }
@@ -45,8 +48,23 @@ static void callback_mouse_button(GLFWwindow* window, int button, int action, in
 	printf("click\n");
 }
 
-static void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {
+static void callback_character(GLFWwindow* window, unsigned int code) {
+	if(code > 255) return;
+	char ch = (char) code;
 
+	input_buffer[input_counter++] = ch;
+}
+
+static void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if(key == GLFW_KEY_ENTER) {
+		memset(input_buffer, 0, sizeof(input_buffer));
+		input_counter = 0;
+	}
+	if(key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS && input_counter > 0) {
+		input_buffer[input_counter-1] = 0;
+		input_counter -= 1;
+	}
+	return;
 	if (key == GLFW_KEY_W) {
 		if (action == GLFW_PRESS) {
 			printf("W PRESS\n");
@@ -226,8 +244,8 @@ int load_texture(const char* path) {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	//Wrapping
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     //Filtering
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -327,6 +345,7 @@ int ctrl_init(const char* title, int w, int h) {
 	glfwSetScrollCallback(win,			callback_scroll);
 	glfwSetKeyCallback(win,				callback_key);
 	glfwSetMouseButtonCallback(win,		callback_mouse_button);
+	glfwSetCharCallback(win,            callback_character);
 
     glewExperimental = GL_TRUE;
     glewInit();
@@ -363,14 +382,10 @@ int ctrl_update() {
 		rc = CLOSE;
 	}	
 
-	char inp[64];
-	fgets(inp, 64, stdin);
-	inp[strlen(inp)-1] = 0; //remove newline
-
 	glClearColor(clampf(0x00), clampf(0x00), clampf(0x00), clampf(0xff));
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	render_text(inp, 0.0f, 0.0f, 0.05f);
+	render_text(input_buffer, 0.0f, 0.0f, 0.15f);
 
 	glfwSwapBuffers(win);
 	return rc;

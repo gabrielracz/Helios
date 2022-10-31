@@ -58,7 +58,7 @@ void main()
         // texture
         vec2 fuv;
         fuv.x = (cuv_x + col)*char_width;
-        fuv.y = 1.0f - ((1.0f - cuv_y) + row)*char_height;
+        fuv.y = clamp(1.0f - ((1.0f - cuv_y) + row)*char_height, 0, 1.0f);
 
         //fuv.y = 1.0f-(row*char_height) - (1 - cuv_y/num_rows);
 		//gl_FragColor = vec4(row*10/255.0f, col*10/255.0f, 0.0f, 1.0f);
