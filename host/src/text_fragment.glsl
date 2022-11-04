@@ -18,7 +18,7 @@ float char_height = 1.0/float(num_rows);
 
 // Text input
 uniform int text_len;
-uniform int text_content[40];
+uniform int text_content[1024];
 
 void main()
 {
@@ -67,6 +67,7 @@ void main()
 
         // Draw character
 		vec4 color = texture2D(onetex, fuv);
+		vec4 hue = vec4(string_index*5/255.0f, 1.0f, 1.0f, 1.0f);
 
 		gl_FragColor = vec4(color.r, color.g, color.b, 1.0);
     } 

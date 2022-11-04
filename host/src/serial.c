@@ -1,21 +1,55 @@
+#include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <fcntl.h>   //File attr defines
+#include <assert.h>
 #include <errno.h>
 #include <termios.h>  
+#include <sys/poll.h>
 
-/*#include "../defines.h"*/
-#define MSGSIZE 60
-#define RSPSIZE 65
+#include "../inc/defs.h"
+#include "../inc/message.h"
+#include "../inc/serial.h"
 
-int init_serial(int sfd) {
+static int sfd;
+
+int serial_quit() {
+	close(sfd);
+	return 0;
+}
+
+int serial_available() {
+	struct pollfd poller = {0};
+	poller.fd = sfd;
+	poller.events = POLLIN;
+
+	int rc = poll(&poller, 1, 0);
+	return rc;
+}
+
+int serial_init(const char* dev_path) {
 	int rc;
 	struct termios tty;
-	
+
+	sfd = open(dev_path, O_RDWR);
+	if(sfd < 0) {
+		perror("serial fd open");
+		return -errno;
+	}
+
+    /*int flags;*/
+    /*flags = fcntl(sfd,F_GETFL,0);*/
+    /*assert(flags != -1);*/
+    /*fcntl(sfd, F_SETFL, flags | O_NONBLOCK);*/
+
+
+	// SERIAL OPTIONS
 	rc = tcgetattr(sfd, &tty); 
 	if(rc) {
 		perror("tcgetattr init_serial");
+		return -errno;
 	}
 
 	//Control Modes
@@ -51,7 +85,7 @@ int init_serial(int sfd) {
 	//
 	// VTIME is in deciseconds, (max 25.5 seconds)
 	tty.c_cc[VTIME] = 0;
-	tty.c_cc[VMIN] = 64;
+	tty.c_cc[VMIN] = sizeof(struct message);
 
 	//Baud Rate
 	
@@ -60,37 +94,50 @@ int init_serial(int sfd) {
 	rc = tcsetattr(sfd, TCSANOW, &tty);
 	if(rc) {
 		perror("tcsetattr init_serial");
+		return -errno;
 	}
 
 	return 0;
 }
 
-int serial_main(int argc, char* argv[]) {
-
-	if(argc < 2) {
-		printf("USAGE: srl FILE\n");
-		return 1;
+/*int serial_send(struct message* msg) {*/
+	/*int bs = write(sfd, msg->buffer, msg->len);*/
+	/*return bs;*/
+/*};*/
+int serial_send(union serialized_message* srl) {
+	int bs = 0;
+	int totb = 0;
+	while((bs = write(sfd, srl->data + totb, sizeof(struct message) - totb)) > 0) {
+		totb += bs;
 	}
 
-	int sfd = open("/dev/ttyUSB0", O_RDWR);
-	if(sfd < 0) {
-		perror("serial fd open");
+	printf("EXP(%d): ", sizeof(srl->data));
+	for(int i = 0; i < sizeof(srl->data); i++ ) {
+		printf("%02x ", srl->data[i]);
 	}
-	init_serial(sfd);
+	printf("\n\n");
+	return bs;
+};
 
-	unsigned char recvbuf[RSPSIZE] = {0};
-	char sendbuf[MSGSIZE];
-	size_t bytes_read = 0;
-	size_t bytes_sent = 0;
-	while(1) {
-		memset(sendbuf, 0, sizeof(sendbuf));
-		fgets(sendbuf, 60, stdin);
-		sendbuf[strlen(sendbuf)-1] = 0;
-		bytes_sent = write(sfd, sendbuf, sizeof(sendbuf));
-		bytes_read = read(sfd, recvbuf, sizeof(recvbuf));
-		printf("%s\n", recvbuf);
+/*int serial_receive(struct message* msg) {*/
+	/*int br = read(sfd, msg->buffer, sizeof(msg->buffer));*/
+	/*msg->len = br;*/
+	/*return br;*/
+/*}*/
+
+int serial_receive(union serialized_message* srl) {
+	int br = 0;
+	int totb = 0;
+	unsigned char buf[1024];
+	while((br = read(sfd, buf + totb, sizeof(srl->data) - totb)) > 0) {
+		totb += br;
 	}
-	close(sfd);
 
-	return 0;
-}
+	printf("RSP (%d): ", totb);
+	for(int i = 0; i < totb; i++ ) {
+		printf("%02x ", buf[i]);
+	}
+	printf("\n");
+	srl->msg.len = totb;
+	return totb;
+};

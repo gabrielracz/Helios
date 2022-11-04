@@ -1,5 +1,5 @@
 
 enum UpdateCode {
-	CLOSE = 1,
-	OK
+	OK = 0,
+	CLOSE
 };
