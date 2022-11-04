@@ -25,6 +25,12 @@ struct message input    = {0};
 /*struct message response = {0};*/
 union serialized_message response = {0};
 
+
+static GLFWwindow* win;
+static int win_width, win_height;
+static char win_title[128];
+static float aspect_ratio;
+
 static inline float clampf(uint8_t b) {
 	return b / 255.0f;
 }
@@ -96,6 +102,10 @@ static void callback_key(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 static void callback_resize(GLFWwindow* window, int width, int height) {
+	printf("resize\n");
+	win_width = width;
+	win_height = height;
+	aspect_ratio = width/height;
 	glViewport(0, 0, width, height);
 }
 
@@ -264,9 +274,6 @@ enum TEXTURES {
 	CHARMAP
 };
 
-static GLFWwindow* win;
-static int win_width, win_height;
-static char win_title[128];
 
 void rndr_text(const char* text, float x, float y, float size) {
     glUseProgram(shaders[TEXT_SHDR]);
@@ -291,9 +298,21 @@ void rndr_text(const char* text, float x, float y, float size) {
 		0.0f, 0.0f, 1.0f, 0.0f,
 		x, y, 0.0f, 1.0f
 	};
+
+	float asp = 1.0f/aspect_ratio;
+	float view_matrix[] = {
+		 asp, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+
 	
 	int loc_transform = glGetUniformLocation(shaders[TEXT_SHDR], "transformation_matrix");
 	glUniformMatrix4fv(loc_transform, 1, GL_FALSE, transformation_matrix);
+
+	int loc_view = glGetUniformLocation(shaders[TEXT_SHDR], "view_matrix");
+	glUniformMatrix4fv(loc_view, 1, GL_FALSE, view_matrix);
 
 	// Set the text data
 	assert(512 > len);
@@ -320,6 +339,7 @@ int rndr_init(const char* title, int w, int h) {
 
 	win_width  = w;
 	win_height = h;
+	aspect_ratio = (float)w/(float)h;
 	strcpy(win_title, title);
 	win = glfwCreateWindow(win_width, win_height, win_title, NULL, NULL);
 	if (win == NULL) {
