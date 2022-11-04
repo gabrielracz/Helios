@@ -111,7 +111,7 @@ int serial_send(union serialized_message* srl) {
 		totb += bs;
 	}
 
-	printf("EXP(%d): ", sizeof(srl->data));
+	printf("EXP(%zu): ", sizeof(srl->data));
 	for(int i = 0; i < sizeof(srl->data); i++ ) {
 		printf("%02x ", srl->data[i]);
 	}
@@ -128,16 +128,14 @@ int serial_send(union serialized_message* srl) {
 int serial_receive(union serialized_message* srl) {
 	int br = 0;
 	int totb = 0;
-	unsigned char buf[1024];
-	while((br = read(sfd, buf + totb, sizeof(srl->data) - totb)) > 0) {
+	while((br = read(sfd, srl->data + totb, sizeof(srl->data) - totb)) > 0) {
 		totb += br;
 	}
 
 	printf("RSP (%d): ", totb);
 	for(int i = 0; i < totb; i++ ) {
-		printf("%02x ", buf[i]);
+		printf("%02x ", srl->data[i]);
 	}
 	printf("\n");
-	srl->msg.len = totb;
 	return totb;
 };

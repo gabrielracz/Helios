@@ -374,10 +374,17 @@ int rndr_update() {
 	glClearColor(clampf(0x00), clampf(0x00), clampf(0x00), clampf(0xff));
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	rndr_text(input.buffer, 0.0f, 0.3f, font_size);
-	rndr_text(response.msg.buffer, 0.0f, 0.0f, font_size/1.5);
+	rndr_text(input.buffer, 0.0f, 0.2f, font_size);
+
+	if(response.msg.len > 0) {
+		char response_str[256];
+		for(int i = 0; i < response.msg.len; i++) {
+			sprintf(response_str + i*3, "%02x ", response.msg.buffer[i]);
+		}
+		rndr_text(response_str, 0.0f, -0.2f, font_size/1.25);
+	}
 	if(serial_available()) {
-		memset(response.msg.buffer, 0, 100);
+		memset(response.msg.buffer, 0, sizeof(struct message));
 		response.msg.len = 0;
 		serial_receive(&response);
 	}
