@@ -119,8 +119,5 @@ int serial_receive(Packet* p) {
 	while((br = read(sfd, p->data + totb, sizeof(p->data) - totb)) > 0) {
 		totb += br;
 	}
-
-	for(int i = 0; i < srl
-
 	return totb;
 };

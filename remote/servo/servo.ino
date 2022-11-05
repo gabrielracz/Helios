@@ -5,6 +5,7 @@ void setup() {
 	Serial.setTimeout(5);
 }
 
+Packet inc = {0, 0};
 
 int read_all(char* buf, int buflen) {
 	int br = 0;
@@ -15,14 +16,13 @@ int read_all(char* buf, int buflen) {
 	return tot;
 }
 
-Packet p = {0, 0};
-char buf[64];
-
 void loop() {
-	if(Serial.available() >= sizeof(Packet)-2) { 
-		memset(p.msg.buf, 0, sizeof(p.msg.buf));
-		int br = read_all(p.msg.buf, sizeof(p.msg.buf));
-		p.msg.len = br;
-		Serial.write(p.data, sizeof(p.data));
+	if(Serial.available() >= sizeof(Packet) - 2) { 
+
+		memset(&inc.data, 0, sizeof(inc.data));
+		int br = read_all(inc.data, sizeof(inc.data));
+
+		Serial.write(inc.data, sizeof(inc.data));
 	}    
+
 }

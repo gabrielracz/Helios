@@ -9,6 +9,11 @@ struct message {
 	uint8_t len;
 };
 
+struct command {
+	uint8_t type;
+	uint8_t value;
+};
+
 typedef union Packet_t{
 	struct message msg;
 	char data[sizeof(struct message)];

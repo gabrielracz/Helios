@@ -367,6 +367,7 @@ int rndr_init(const char* title, int w, int h) {
     glViewport(0, 0, win_width, win_height);
     /*glEnable(GL_DEPTH_TEST);*/
     /*glDepthFunc(GL_LESS);*/
+	glfwSwapInterval(0);
 	
 	//  SHADERS
 	shaders[TEXT_SHDR] = load_shader("src/text_vertex.glsl", "src/text_fragment.glsl");
