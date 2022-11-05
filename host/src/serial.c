@@ -89,7 +89,7 @@ int serial_init(const char* dev_path) {
 
 	//Baud Rate
 	
-	cfsetspeed(&tty, B9600);    //set both input and output at once (linux fancy)
+	cfsetspeed(&tty, B115200);    //set both input and output at once (linux fancy)
 
 	rc = tcsetattr(sfd, TCSANOW, &tty);
 	if(rc) {
@@ -110,20 +110,8 @@ int serial_send(union serialized_message* srl) {
 	while((bs = write(sfd, srl->data + totb, sizeof(struct message) - totb)) > 0) {
 		totb += bs;
 	}
-
-	printf("EXP(%zu): ", sizeof(srl->data));
-	for(int i = 0; i < sizeof(srl->data); i++ ) {
-		printf("%02x ", srl->data[i]);
-	}
-	printf("\n\n");
 	return bs;
 };
-
-/*int serial_receive(struct message* msg) {*/
-	/*int br = read(sfd, msg->buffer, sizeof(msg->buffer));*/
-	/*msg->len = br;*/
-	/*return br;*/
-/*}*/
 
 int serial_receive(union serialized_message* srl) {
 	int br = 0;
@@ -131,11 +119,5 @@ int serial_receive(union serialized_message* srl) {
 	while((br = read(sfd, srl->data + totb, sizeof(srl->data) - totb)) > 0) {
 		totb += br;
 	}
-
-	printf("RSP (%d): ", totb);
-	for(int i = 0; i < totb; i++ ) {
-		printf("%02x ", srl->data[i]);
-	}
-	printf("\n");
 	return totb;
 };

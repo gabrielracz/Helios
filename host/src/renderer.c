@@ -1,9 +1,12 @@
 
 #include <assert.h>
+#include <bits/time.h>
+#include <bits/types/struct_timespec.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -25,11 +28,14 @@ struct message input    = {0};
 /*struct message response = {0};*/
 union serialized_message response = {0};
 
+void rndr_send_msg();
 
 static GLFWwindow* win;
 static int win_width, win_height;
 static char win_title[128];
 static float aspect_ratio;
+
+struct timespec clk_start, clk_end;
 
 static inline float clampf(uint8_t b) {
 	return b / 255.0f;
@@ -58,10 +64,7 @@ static void callback_character(GLFWwindow* window, unsigned int code) {
 
 static void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if(key == GLFW_KEY_ENTER && action == GLFW_RELEASE) {
-		union serialized_message s = {.msg = input};
-		serial_send(&s);
-		memset(input.buffer, 0, 100);
-		input.len = 0;
+		rndr_send_msg();
 	}
 	if(key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS && input.len > 0) {
 		input.buffer[input.len-1] = 0;
@@ -382,6 +385,14 @@ int rndr_init(const char* title, int w, int h) {
 	return 0;
 }
 
+void rndr_send_msg() {
+	union serialized_message s = {.msg = input};
+	clock_gettime(CLOCK_MONOTONIC, &clk_start);
+	serial_send(&s);
+	memset(input.buffer, 0, sizeof(input.buffer));
+	input.len = 0;
+}
+
 int rndr_update() {
 	int rc = OK;
 	glfwPollEvents();
@@ -407,6 +418,11 @@ int rndr_update() {
 		memset(response.msg.buffer, 0, sizeof(struct message));
 		response.msg.len = 0;
 		serial_receive(&response);
+		clock_gettime(CLOCK_MONOTONIC, &clk_end);
+		double delta = (double)(clk_end.tv_nsec - clk_start.tv_nsec)/1e9;
+		delta += clk_end.tv_sec - clk_start.tv_sec;
+		printf("message-delta: %fs\n", delta);
+
 	}
 
 	glfwSwapBuffers(win);

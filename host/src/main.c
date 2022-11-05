@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	if(rndr_init("Helios", 1000, 500))	goto quit;
+	if(rndr_init("Helios", 1000, 250))	goto quit;
 	if(ctrl_init())						goto quit;
 	if(serial_init(argv[1]))			goto quit;
 
