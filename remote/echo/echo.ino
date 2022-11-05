@@ -31,5 +31,3 @@ void loop() {
       Serial.write(srl.data, sizeof(srl.data));
     }    
 }
-
-
