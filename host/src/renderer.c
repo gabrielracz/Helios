@@ -417,14 +417,14 @@ int rndr_update() {
 	rndr_text(rspstr, 0.0f, -0.2f, font_size/1.25);
 
 	/*if(serial_available()) {*/
-		memset(&response, 0, sizeof(Packet));
-		serial_receive(&response);
+	serial_receive(&response);
 
-		clock_gettime(CLOCK_MONOTONIC, &clk_end);
-		double delta = (double)(clk_end.tv_nsec - clk_start.tv_nsec)/1e9;
-		delta += clk_end.tv_sec - clk_start.tv_sec;
-		printf("message-delta: %fs\n", delta);
-
+	clock_gettime(CLOCK_MONOTONIC, &clk_end);
+	double delta = (double)(clk_end.tv_nsec - clk_start.tv_nsec)/1e9;
+	delta += clk_end.tv_sec - clk_start.tv_sec;
+	char deltastr[16];
+	sprintf(deltastr, "%.5fs", delta);
+	rndr_text(deltastr, -1.75, -0.75, 0.2);
 	/*}*/
 
 	glfwSwapBuffers(win);
