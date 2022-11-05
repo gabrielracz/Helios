@@ -1,7 +1,8 @@
 #include "global.h"
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(BAUD);
+  Serial.setTimeout(5);
 }
 
 union serialized_message srl = {0, 0};
@@ -24,18 +25,11 @@ void loop() {
     srl.msg.buffer[126] = '0x66';
     srl.msg.len = sizeof(srl.data);  
 
-    if(Serial.available() > 62) { 
-      // delay(10);
+    if(Serial.available() >= sizeof(struct message) - 2) { 
       int br = read_all(buf, sizeof(buf));
       memcpy(srl.data, buf, br);
       Serial.write(srl.data, sizeof(srl.data));
     }    
-
-    // if(Serial.available() >= sizeof(srl.data)){
-    //   delay(5);
-    //   br = Serial.readBytes(srl.data, sizeof(srl.data));
-    //   Serial.write(srl.data, sizeof(srl.data));
-    // }
 }
 
 

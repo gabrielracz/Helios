@@ -1,16 +1,13 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
-#define MSGSIZE 60
-#define RSPSIZE 65
-
 #include <stdint.h>
 
+#define BAUD 115200
+
 struct message {
-	char buffer[63];
+	char buffer[31];
 	uint8_t len;
 };
-
-
 
 union serialized_message{
 	struct message msg;
