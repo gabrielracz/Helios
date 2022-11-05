@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <limits.h>
 
@@ -12,11 +13,11 @@
 int main(int argc, char* argv[]) {
 
 	if(argc < 2) {
-		printf("USAGE: helios FILE\n");
+		printf("Usage: helios PORT\n");
 		return -1;
 	}
 
-	if(rndr_init("Helios", 1000, 250))	goto quit;
+	if(rndr_init("Helios", 750, 250))	goto quit;
 	if(ctrl_init())						goto quit;
 	if(serial_init(argv[1]))			goto quit;
 

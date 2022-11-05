@@ -5,13 +5,13 @@
 #define BAUD 115200
 
 struct message {
-	char buffer[31];
+	char buf[31];
 	uint8_t len;
 };
 
-union serialized_message{
+typedef union Packet_t{
 	struct message msg;
 	char data[sizeof(struct message)];
-};
+}Packet;
 #endif
 

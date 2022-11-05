@@ -1,5 +1,5 @@
 
-port = /dev/ttyUSB0
+port = /dev/ttyUSB*
 
 all: .crumb
 

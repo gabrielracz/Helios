@@ -20,13 +20,12 @@
 #include "../inc/serial.h"
 #include "../../global.h"
 
-char input_buffer[1024] = {0};
 int input_counter = 0;
-float font_size = 0.15f;
+float font_size = 0.3f;
 
-struct message input    = {0};
-/*struct message response = {0};*/
-union serialized_message response = {0};
+Packet input     = {0};
+Packet finalized = {0};
+Packet response  = {0};
 
 void rndr_send_msg();
 
@@ -59,16 +58,16 @@ static void callback_character(GLFWwindow* window, unsigned int code) {
 	if(code > 255) return;
 	char ch = (char) code;
 
-	input.buffer[input.len++] = ch;
+	input.msg.buf[input.msg.len++] = ch;
 }
 
 static void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if(key == GLFW_KEY_ENTER && action == GLFW_RELEASE) {
 		rndr_send_msg();
 	}
-	if(key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS && input.len > 0) {
-		input.buffer[input.len-1] = 0;
-		input.len -= 1;
+	if(key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS && input.msg.len > 0) {
+		input.msg.buf[input.msg.len-1] = 0;
+		input.msg.len -= 1;
 	}
 	return;
 	if (key == GLFW_KEY_W) {
@@ -386,11 +385,10 @@ int rndr_init(const char* title, int w, int h) {
 }
 
 void rndr_send_msg() {
-	union serialized_message s = {.msg = input};
 	clock_gettime(CLOCK_MONOTONIC, &clk_start);
-	serial_send(&s);
-	memset(input.buffer, 0, sizeof(input.buffer));
-	input.len = 0;
+	serial_send(&input);
+	memset(input.data, 0, sizeof(input.data));
+	input.msg.len = 0;
 }
 
 int rndr_update() {
@@ -405,17 +403,18 @@ int rndr_update() {
 	glClearColor(clampf(0x00), clampf(0x00), clampf(0x00), clampf(0xff));
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	rndr_text(input.buffer, 0.0f, 0.2f, font_size);
-
+	rndr_text(input.msg.buf, 0.0f, 0.2f, font_size);
 	if(response.msg.len > 0) {
 		char response_str[256];
 		for(int i = 0; i < response.msg.len; i++) {
-			sprintf(response_str + i*3, "%02x ", response.msg.buffer[i]);
+			sprintf(response_str + i*3, "%02x ", response.msg.buf[i]);
 		}
 		rndr_text(response_str, 0.0f, -0.2f, font_size/1.25);
 	}
+
+
 	if(serial_available()) {
-		memset(response.msg.buffer, 0, sizeof(struct message));
+		memset(response.msg.buf, 0, sizeof(Packet));
 		response.msg.len = 0;
 		serial_receive(&response);
 		clock_gettime(CLOCK_MONOTONIC, &clk_end);
