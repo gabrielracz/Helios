@@ -9,14 +9,19 @@ struct message {
 	uint8_t len;
 };
 
+enum CmdTypes {
+	CMD_DELTA_POS,
+	CMD_ABS_POS
+};
+
 struct command {
 	uint8_t type;
-	uint8_t value;
+	uint8_t val[3];
 };
 
 typedef union Packet_t{
-	struct message msg;
-	char data[sizeof(struct message)];
+	struct command cmd;
+	char data[sizeof(struct command)];
 }Packet;
 #endif
 

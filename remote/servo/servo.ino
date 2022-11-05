@@ -1,11 +1,13 @@
 #include "global.h"
 
+Packet inc = {0, 0};
+
 void setup() {
 	Serial.begin(BAUD);
 	Serial.setTimeout(5);
+	Serial.write(inc.data, sizeof(inc.data));
 }
 
-Packet inc = {0, 0};
 
 int read_all(char* buf, int buflen) {
 	int br = 0;
@@ -17,12 +19,12 @@ int read_all(char* buf, int buflen) {
 }
 
 void loop() {
-	if(Serial.available() >= sizeof(Packet) - 2) { 
+	if(Serial.available() >= sizeof(Packet)) { 
 
-		memset(&inc.data, 0, sizeof(inc.data));
-		int br = read_all(inc.data, sizeof(inc.data));
+		memset(&inc.data, 0, sizeof(Packet));
+		int br = read_all(inc.data, sizeof(Packet));
 
-		Serial.write(inc.data, sizeof(inc.data));
+		Serial.write(inc.data, sizeof(Packet));
 	}    
 
 }

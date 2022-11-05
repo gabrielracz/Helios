@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -55,47 +56,42 @@ static void callback_mouse_button(GLFWwindow* window, int button, int action, in
 }
 
 static void callback_character(GLFWwindow* window, unsigned int code) {
-	if(code > 255) return;
-	char ch = (char) code;
-
-	input.msg.buf[input.msg.len++] = ch;
 }
 
+struct KeyState {
+	bool w_held;
+	bool s_held;
+	bool d_held;
+	bool a_held;
+} keystate = {0};
+
 static void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if(key == GLFW_KEY_ENTER && action == GLFW_RELEASE) {
-		rndr_send_msg();
-	}
-	if(key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS && input.msg.len > 0) {
-		input.msg.buf[input.msg.len-1] = 0;
-		input.msg.len -= 1;
-	}
-	return;
 	if (key == GLFW_KEY_W) {
 		if (action == GLFW_PRESS) {
-			printf("W PRESS\n");
+			keystate.w_held = true;
 		} else if (action == GLFW_RELEASE) {
-			printf("W RELEASE\n");
+			keystate.w_held = false;
 		}
 	}
 	else if (key == GLFW_KEY_S) {
 		if (action == GLFW_PRESS) {
-			printf("S PRESS\n");
+			keystate.s_held = true;
 		} else if (action == GLFW_RELEASE) {
-			printf("S RELEASE\n");
+			keystate.s_held = false;
 		}
 	}
 	else if (key == GLFW_KEY_A) {
 		if (action == GLFW_PRESS) {
-			printf("A PRESS\n");
+			keystate.a_held = true;
 		} else if (action == GLFW_RELEASE) {
-			printf("A RELEASE\n");
+			keystate.a_held = false;
 		}
 	}
 	else if (key == GLFW_KEY_D) {
 		if (action == GLFW_PRESS) {
-			printf("D PRESS\n");
+			keystate.d_held = true;
 		} else if (action == GLFW_RELEASE) {
-			printf("D RELEASE\n");
+			keystate.d_held = false;
 		}
 	}
 	else if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -276,7 +272,6 @@ enum TEXTURES {
 	CHARMAP
 };
 
-
 void rndr_text(const char* text, float x, float y, float size) {
     glUseProgram(shaders[TEXT_SHDR]);
     glBindVertexArray(vertex_arrays[TEXT_VAO]);
@@ -385,12 +380,17 @@ int rndr_init(const char* title, int w, int h) {
 	return 0;
 }
 
-void rndr_send_msg() {
-	clock_gettime(CLOCK_MONOTONIC, &clk_start);
-	serial_send(&input);
-	memset(input.data, 0, sizeof(input.data));
-	input.msg.len = 0;
-}
+#define VAL(x) 255/2 + (x)
+
+static void rndr_set_cmd() {
+	input.cmd.type   = CMD_DELTA_POS;
+	memset(input.cmd.val, 0x7f, sizeof(input.cmd.val));
+
+	if(keystate.d_held) input.cmd.val[0] += 5;
+	if(keystate.a_held) input.cmd.val[0] -= 5;
+	if(keystate.w_held) input.cmd.val[1] += 5;
+	if(keystate.s_held) input.cmd.val[1] -= 5;
+};
 
 int rndr_update() {
 	int rc = OK;
@@ -404,26 +404,28 @@ int rndr_update() {
 	glClearColor(clampf(0x00), clampf(0x00), clampf(0x00), clampf(0xff));
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	rndr_text(input.msg.buf, 0.0f, 0.2f, font_size);
-	if(response.msg.len > 0) {
-		char response_str[256];
-		for(int i = 0; i < response.msg.len; i++) {
-			sprintf(response_str + i*3, "%02x ", response.msg.buf[i]);
-		}
-		rndr_text(response_str, 0.0f, -0.2f, font_size/1.25);
-	}
+	rndr_set_cmd();
+	clock_gettime(CLOCK_MONOTONIC, &clk_start);
+	serial_send(&input);
 
+	char cmdstr[128];
+	snprintf(cmdstr, sizeof(cmdstr), "%02x: %02x %02x %02x", input.cmd.type, input.cmd.val[0], input.cmd.val[1], input.cmd.val[2]);
+	rndr_text(cmdstr, 0.0f, 0.2f, font_size);
 
-	if(serial_available()) {
-		memset(response.msg.buf, 0, sizeof(Packet));
-		response.msg.len = 0;
+	char rspstr[128];
+	snprintf(rspstr, sizeof(rspstr), "%02x: %02x %02x %02x", response.cmd.type, response.cmd.val[0], response.cmd.val[1], response.cmd.val[2]);
+	rndr_text(rspstr, 0.0f, -0.2f, font_size/1.25);
+
+	/*if(serial_available()) {*/
+		memset(&response, 0, sizeof(Packet));
 		serial_receive(&response);
+
 		clock_gettime(CLOCK_MONOTONIC, &clk_end);
 		double delta = (double)(clk_end.tv_nsec - clk_start.tv_nsec)/1e9;
 		delta += clk_end.tv_sec - clk_start.tv_sec;
 		printf("message-delta: %fs\n", delta);
 
-	}
+	/*}*/
 
 	glfwSwapBuffers(win);
 

@@ -85,7 +85,7 @@ int serial_init(const char* dev_path) {
 	//
 	// VTIME is in deciseconds, (max 25.5 seconds)
 	tty.c_cc[VTIME] = 0;
-	tty.c_cc[VMIN] = sizeof(struct message);
+	tty.c_cc[VMIN] = sizeof(Packet);
 
 	//Baud Rate
 	
@@ -100,14 +100,10 @@ int serial_init(const char* dev_path) {
 	return 0;
 }
 
-/*int serial_send(struct message* msg) {*/
-	/*int bs = write(sfd, msg->buffer, msg->len);*/
-	/*return bs;*/
-/*};*/
 int serial_send(Packet* srl) {
 	int bs = 0;
 	int totb = 0;
-	while((bs = write(sfd, srl->data + totb, sizeof(struct message) - totb)) > 0) {
+	while((bs = write(sfd, srl->data + totb, sizeof(Packet) - totb)) > 0) {
 		totb += bs;
 	}
 	return bs;
@@ -116,7 +112,7 @@ int serial_send(Packet* srl) {
 int serial_receive(Packet* p) {
 	int br = 0;
 	int totb = 0;
-	while((br = read(sfd, p->data + totb, sizeof(p->data) - totb)) > 0) {
+	while((br = read(sfd, p->data + totb, sizeof(Packet) - totb)) > 0) {
 		totb += br;
 	}
 	return totb;
