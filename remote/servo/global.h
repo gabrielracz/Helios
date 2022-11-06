@@ -11,7 +11,9 @@ struct message {
 
 enum CmdTypes {
 	CMD_DELTA_POS,
-	CMD_ABS_POS
+	CMD_ABS_POS,
+	HEARTBEAT,
+	ACK
 };
 
 struct command {
