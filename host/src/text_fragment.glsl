@@ -6,6 +6,7 @@ in vec2 uv_interp;
 
 // Texture sampler
 uniform sampler2D onetex;
+uniform vec4 text_color;
 
 // Configuration of the font texture
 // Number of characters per row
@@ -66,8 +67,8 @@ void main()
 		//return;
 
         // Draw character
-		vec4 color = texture2D(onetex, fuv);
-		vec4 hue = vec4(string_index*5/255.0f, 1.0f, 1.0f, 1.0f);
+		vec4 texture_color = texture2D(onetex, fuv);
+		vec4 color = texture_color * text_color;
 
 		gl_FragColor = vec4(color.r, color.g, color.b, 1.0);
     } 

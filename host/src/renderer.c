@@ -65,6 +65,8 @@ struct KeyState {
 	bool a_held;
 } keystate = {0};
 
+float controller_sensitivity = 5.0f;
+
 static void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_W) {
 		if (action == GLFW_PRESS) {
@@ -92,6 +94,14 @@ static void callback_key(GLFWwindow* window, int key, int scancode, int action, 
 			keystate.d_held = true;
 		} else if (action == GLFW_RELEASE) {
 			keystate.d_held = false;
+		}
+	}else if(key == GLFW_KEY_LEFT_BRACKET) {
+		if(action == GLFW_PRESS) {
+			controller_sensitivity -= 0.5f;
+		}
+	}else if(key == GLFW_KEY_RIGHT_BRACKET) {
+		if(action == GLFW_PRESS) {
+			controller_sensitivity += 0.5f;
 		}
 	}
 	else if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -272,7 +282,28 @@ enum TEXTURES {
 	CHARMAP
 };
 
-void rndr_text(const char* text, float x, float y, float size) {
+#define NUM_COLORS 6
+enum Colors {
+	WHITE = 0,
+	GREEN,
+	RED,
+	BLUE,
+	BLACK,
+	MAGENTA
+};
+
+#define CLF(x) (x)/255.0f
+//19CB00
+float colors[NUM_COLORS][4] = {
+	{1.0f, 1.0f, 1.0f, 1.0f},
+	{CLF(0x19), CLF(0xCB), CLF(0x00), 1.0f},
+	{1.0f, 0.0f, 0.0f, 1.0f},
+	{0.0f, 0.0f, 1.0f, 1.0f},
+	{0.0f, 0.0f, 0.0f, 1.0f},
+	{1.0f, 0.0f, 1.0f, 1.0f}
+};
+
+void rndr_text(const char* text, float x, float y, float size, int color) {
     glUseProgram(shaders[TEXT_SHDR]);
     glBindVertexArray(vertex_arrays[TEXT_VAO]);
 
@@ -310,6 +341,9 @@ void rndr_text(const char* text, float x, float y, float size) {
 
 	int loc_view = glGetUniformLocation(shaders[TEXT_SHDR], "view_matrix");
 	glUniformMatrix4fv(loc_view, 1, GL_FALSE, view_matrix);
+
+	int loc_color = glGetUniformLocation(shaders[TEXT_SHDR], "text_color");
+	glUniform4f(loc_color, colors[color][0], colors[color][1], colors[color][2], colors[color][3]);
 
 	// Set the text data
 	assert(512 > len);
@@ -362,7 +396,7 @@ int rndr_init(const char* title, int w, int h) {
     glViewport(0, 0, win_width, win_height);
     /*glEnable(GL_DEPTH_TEST);*/
     /*glDepthFunc(GL_LESS);*/
-	glfwSwapInterval(0);
+	/*glfwSwapInterval(0);*/
 	
 	//  SHADERS
 	shaders[TEXT_SHDR] = load_shader("src/text_vertex.glsl", "src/text_fragment.glsl");
@@ -375,7 +409,7 @@ int rndr_init(const char* title, int w, int h) {
 	vertex_arrays[TEXT_VAO] = init_quad();
 
 	//  TEXTURES
-	textures[CHARMAP] = load_texture("rsc/fixedsys.png");
+	textures[CHARMAP] = load_texture("rsc/fixedsys_alpha.png");
 
 	return 0;
 }
@@ -386,10 +420,10 @@ static void rndr_set_cmd() {
 	input.cmd.type   = CMD_DELTA_POS;
 	memset(input.cmd.val, 0x7f, sizeof(input.cmd.val));
 
-	if(keystate.d_held) input.cmd.val[0] += 5;
-	if(keystate.a_held) input.cmd.val[0] -= 5;
-	if(keystate.w_held) input.cmd.val[1] += 5;
-	if(keystate.s_held) input.cmd.val[1] -= 5;
+	if(keystate.d_held) input.cmd.val[0] += 1 * controller_sensitivity;
+	if(keystate.a_held) input.cmd.val[0] -= 1 * controller_sensitivity;
+	if(keystate.w_held) input.cmd.val[1] += 1 * controller_sensitivity;
+	if(keystate.s_held) input.cmd.val[1] -= 1 * controller_sensitivity;
 };
 
 int rndr_update() {
@@ -410,11 +444,15 @@ int rndr_update() {
 
 	char cmdstr[128];
 	snprintf(cmdstr, sizeof(cmdstr), "%02x: %02x %02x %02x", input.cmd.type, input.cmd.val[0], input.cmd.val[1], input.cmd.val[2]);
-	rndr_text(cmdstr, 0.0f, 0.2f, font_size);
+	rndr_text(cmdstr, 0.0f, 0.2f, font_size, GREEN);
 
 	char rspstr[128];
 	snprintf(rspstr, sizeof(rspstr), "%02x: %02x %02x %02x", response.cmd.type, response.cmd.val[0], response.cmd.val[1], response.cmd.val[2]);
-	rndr_text(rspstr, 0.0f, -0.2f, font_size/1.25);
+	rndr_text(rspstr, 0.0f, -0.2f, font_size/1.25, GREEN);
+
+	char sensstr[128];
+	snprintf(sensstr, sizeof(sensstr), "%.2f", controller_sensitivity);
+	rndr_text(sensstr, 2.0f, -0.2f, font_size/1.25, BLUE);
 
 	/*if(serial_available()) {*/
 	serial_receive(&response);
@@ -424,7 +462,7 @@ int rndr_update() {
 	delta += clk_end.tv_sec - clk_start.tv_sec;
 	char deltastr[16];
 	sprintf(deltastr, "%.5fs", delta);
-	rndr_text(deltastr, -1.75, -0.75, 0.2);
+	rndr_text(deltastr, -1.75, -0.75, 0.2, MAGENTA);
 	/*}*/
 
 	glfwSwapBuffers(win);
